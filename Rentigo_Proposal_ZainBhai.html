@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rentigo Admin Redesign — Proposal for Zain Bhai</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f5f0;
+    --accent: #c8f542;
+    --accent2: #ff5533;
+    --grey: #1a1a1a;
+    --mid: #2e2e2e;
+    --text-muted: #888;
+    --border: #2a2a2a;
+    --shadow: 0 22px 55px rgba(0,0,0,0.55);
+    --shadow-soft: 0 14px 40px rgba(0,0,0,0.40);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+  }
+
+  /* ── GLOBAL READABILITY POLISH ── */
+  header, .hero, section, footer { position: relative; z-index: 1; }
+  section p, .hero-sub, .pain-card p, .ex-desc, .tl-desc, .notice p, .notice li { color: rgba(245,245,240,0.72) !important; }
+  h1, h2, .pain-card h3, .solution-block h3, .tl-pkg h3 { text-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+
+  /* ── BACKGROUND FX (SUBTLE “3D” GLOW) ── */
+  .bg-fx {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .orb {
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    filter: blur(30px);
+    opacity: 0.28;
+    transform: translate3d(0,0,0);
+    animation: floatOrb 14s ease-in-out infinite;
+  }
+  .orb.a { left: -180px; top: -180px; background: radial-gradient(circle at 30% 30%, rgba(200,245,66,0.35), rgba(200,245,66,0) 60%); }
+  .orb.b { right: -200px; top: 80px; background: radial-gradient(circle at 40% 40%, rgba(255,85,51,0.22), rgba(255,85,51,0) 62%); animation-duration: 18s; }
+  .orb.c { left: 18%; bottom: -240px; background: radial-gradient(circle at 50% 50%, rgba(200,245,66,0.18), rgba(200,245,66,0) 65%); animation-duration: 22s; }
+  @keyframes floatOrb {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    50% { transform: translate3d(0,-22px,0) scale(1.03); }
+  }
+
+  /* ── FLOATING INTERACTIVE LOGO ── */
+  #floatingLogo {
+    position: fixed;
+    left: 22px;
+    top: 22px;
+    width: 140px;
+    height: 140px;
+    z-index: 50;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none; /* we handle drag */
+    cursor: grab;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 18px 45px rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(0,0,0,0.2);
+    backdrop-filter: blur(8px);
+    transform: translate3d(0,0,0);
+  }
+  #floatingLogo:active { cursor: grabbing; }
+  #floatingLogo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    filter: contrast(1.05) saturate(1.05);
+  }
+  #floatingLogo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(420px 180px at 15% 10%, rgba(255,255,255,0.18), rgba(255,255,255,0) 55%);
+    opacity: 0.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #floatingLogo { display: none; }
+  }
+
+  /* ── 3D TILT CARDS ── */
+  .tilt-surface { perspective: 1000px; perspective-origin: 50% 35%; }
+  .tilt-card {
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 220ms ease, box-shadow 220ms ease, outline-color 220ms ease, background 220ms ease, border-color 220ms ease;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255,255,255,0.06);
+    background-image: radial-gradient(600px 240px at 10% 0%, rgba(255,255,255,0.06), transparent 55%);
+  }
+  .tilt-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 200ms ease;
+    background: radial-gradient(500px 220px at var(--mx, 50%) var(--my, 40%), rgba(200,245,66,0.16), rgba(255,255,255,0) 55%);
+    mix-blend-mode: screen;
+  }
+  .tilt-card:hover::after { opacity: 1; }
+  .tilt-depth { transform: translateZ(18px); }
+
+  @media (hover: hover) and (pointer: fine) {
+    .tilt-card:hover { box-shadow: var(--shadow); border-color: rgba(200,245,66,0.18); }
+  }
+
+  /* Motion safety */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .orb { animation: none; }
+    .tilt-card { transition: none; }
+  }
+
+  /* ── TYPEWRITER ── */
+  .typewriter {
+    font-size: 17px;
+    line-height: 1.75;
+    max-width: 680px;
+    color: #000;
+    white-space: pre-wrap;
+    font-weight: 700;
+  }
+  .solution-block .typewriter,
+  .solution-block .typewriter * {
+    color: #000 !important;
+    font-weight: 800;
+  }
+  .typewriter .tw-line { display: block; margin: 0 0 8px 0; }
+  .typewriter .tw-cursor {
+    display: inline-block;
+    width: 10px;
+    margin-left: 2px;
+    color: rgba(0,0,0,0.55);
+    animation: twBlink 900ms steps(1) infinite;
+  }
+  @keyframes twBlink { 50% { opacity: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .typewriter .tw-cursor { animation: none; opacity: 0; }
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .badge {
+    background: var(--accent);
+    color: var(--black);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 2px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 100px 60px 80px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(200,245,66,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    left: -120px;
+    bottom: -220px;
+    width: 620px;
+    height: 620px;
+    background: radial-gradient(circle, rgba(255,85,51,0.05) 0%, transparent 68%);
+    pointer-events: none;
+    transform: translate3d(0,0,0);
+  }
+
+  .hero .hero-meta .meta-item {
+    padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    backdrop-filter: blur(6px);
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: var(--accent);
+    display: inline-block;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(42px, 6vw, 80px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    max-width: 800px;
+    margin-bottom: 32px;
+  }
+  h1 .highlight {
+    color: var(--accent);
+    display: block;
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 48px;
+  }
+  .meta-item label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .meta-item span {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* ── SECTION ── */
+  section {
+    padding: 80px 60px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 48px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+  h2 em { font-style: normal; color: var(--accent); }
+
+  /* ── PAIN POINTS ── */
+  .pain-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 48px;
+  }
+  .pain-grid > .tilt-surface { display: block; }
+  .pain-card {
+    background: var(--grey);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pain-card { border-radius: 10px; }
+  .pain-card::before {
+    content: attr(data-num);
+    position: absolute;
+    top: -10px; right: 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 100px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.03);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .pain-tag {
+    display: inline-block;
+    background: var(--accent2);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+  .pain-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+  .pain-card p { color: var(--text-muted); font-size: 15px; line-height: 1.7; }
+
+  /* ── SOLUTION ── */
+  .solution-block {
+    background: var(--accent);
+    color: var(--black);
+    padding: 60px;
+    margin-top: 48px;
+  }
+  .solution-block { border-radius: 10px; box-shadow: 0 30px 80px rgba(200,245,66,0.18); }
+  .solution-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+  .solution-block p { font-size: 17px; line-height: 1.7; max-width: 600px; }
+
+  /* ── PACKAGES ── */
+  .packages-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 48px;
+  }
+  .packages-grid > .tilt-surface { display: block; }
+  .pkg {
+    background: var(--grey);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .pkg.recommended {
+    background: var(--mid);
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .pkg { border-radius: 12px; }
+  .pkg.recommended { box-shadow: 0 28px 70px rgba(200,245,66,0.10), var(--shadow); }
+  .rec-badge {
+    position: absolute;
+    top: -1px; right: 24px;
+    background: var(--accent);
+    color: var(--black);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+  }
+  .pkg-name {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+  .pkg-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .pkg-price sup { font-size: 18px; letter-spacing: 0; }
+  .pkg-price-label { font-size: 12px; color: var(--text-muted); margin-bottom: 28px; }
+  .pkg-timeline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    padding: 8px 14px;
+    border-radius: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 32px;
+  }
+  .pkg-timeline .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  .pkg-screens {
+    font-family: 'Syne', sans-serif;
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .pkg-screens-label { font-size: 12px; color: var(--text-muted); margin-bottom: 32px; margin-top: 4px; }
+
+  .divider { width: 100%; height: 1px; background: var(--border); margin: 20px 0; }
+
+  .includes-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .item .icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+  .item.yes .icon { color: var(--accent); }
+  .item.no .icon { color: #444; }
+  .item.no span { color: #555; }
+
+  .payment-pill {
+    margin-top: auto;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+  .payment-pill label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 12px;
+  }
+  .payment-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .pay-a { background: var(--accent); }
+  .pay-b { background: var(--border); }
+  .payment-split {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .payment-split .first { color: var(--accent); font-weight: 600; }
+  .payment-split .second { color: var(--text-muted); }
+
+  /* ── SCOPE TABLE ── */
+  .scope-table { width: 100%; border-collapse: collapse; margin-top: 48px; }
+  .scope-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scope-table td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: top;
+  }
+  .scope-table tr:last-child td { border-bottom: none; }
+  .scope-table .module {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .scope-table .detail { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  .check { color: var(--accent); font-size: 16px; }
+  .cross { color: #333; font-size: 16px; }
+  .partial { color: #f5a623; font-size: 13px; font-weight: 600; }
+  .scope-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── NOT INCLUDED ── */
+  .exclusions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    margin-top: 48px;
+  }
+  .exclusion-item {
+    background: var(--grey);
+    padding: 28px 32px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .ex-icon { font-size: 20px; flex-shrink: 0; }
+  .ex-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .ex-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+  /* ── REVISIONS ── */
+  .revision-block {
+    background: var(--grey);
+    padding: 48px;
+    margin-top: 32px;
+    border-left: 4px solid var(--accent);
+  }
+  .revision-block { border-radius: 10px; box-shadow: var(--shadow-soft); border: 1px solid rgba(255,255,255,0.06); }
+  .revision-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 24px;
+  }
+  .revision-rules { list-style: none; }
+  .revision-rules li {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .revision-rules li:last-child { border-bottom: none; }
+  .rule-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent);
+    flex-shrink: 0;
+    width: 24px;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2px;
+  }
+  .tl-pkg { background: var(--grey); padding: 36px; }
+  .tl-pkg { border-radius: 10px; box-shadow: var(--shadow-soft); border: 1px solid rgba(255,255,255,0.06); }
+  .tl-pkg h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tl-item {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .tl-week {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--accent);
+    flex-shrink: 0;
+    width: 52px;
+  }
+  .tl-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── NOTICE BLOCK ── */
+  .notice {
+    background: rgba(255,85,51,0.08);
+    border: 1px solid rgba(255,85,51,0.3);
+    padding: 32px 40px;
+    margin-top: 32px;
+  }
+  .notice { border-radius: 10px; box-shadow: var(--shadow-soft); }
+  .notice h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 12px;
+  }
+  .notice p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+  .notice ul { margin-top: 12px; padding-left: 0; list-style: none; }
+  .notice ul li {
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,85,51,0.1);
+    padding-left: 16px;
+    position: relative;
+  }
+  .notice ul li::before { content: '—'; position: absolute; left: 0; color: var(--accent2); }
+
+  /* ── CTA ── */
+  .cta-section {
+    padding: 80px 60px;
+    background: var(--accent);
+    color: var(--black);
+  }
+  .cta-section { position: relative; overflow: hidden; }
+  .cta-section::before {
+    content: "";
+    position: absolute;
+    inset: -100px -100px auto -100px;
+    height: 320px;
+    background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0) 60%);
+    pointer-events: none;
+    transform: translate3d(0,0,0);
+  }
+  .cta-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 60px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.0;
+    margin-bottom: 24px;
+  }
+  .cta-section p {
+    font-size: 18px;
+    max-width: 500px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+    opacity: 0.7;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-bottom: 48px;
+  }
+  .step {
+    background: rgba(0,0,0,0.08);
+    padding: 28px 24px;
+  }
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+  .step-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { font-size: 13px; opacity: 0.6; line-height: 1.5; }
+
+  .cta-contact {
+    display: flex;
+    gap: 48px;
+    align-items: center;
+    padding-top: 40px;
+    border-top: 2px solid rgba(0,0,0,0.15);
+  }
+  .cta-contact p { font-size: 15px; margin-bottom: 0; }
+  .cta-contact strong { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; display: block; }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 28px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  footer p { font-size: 13px; color: var(--text-muted); }
+  .validity {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--grey);
+    padding: 8px 16px;
+  }
+
+  @media (max-width: 900px) {
+    header, .hero, section { padding-left: 24px; padding-right: 24px; }
+    .pain-grid, .packages-grid, .exclusions-grid, .timeline, .steps { grid-template-columns: 1fr; }
+    .scope-table th:nth-child(n+3), .scope-table td:nth-child(n+3) { display: none; }
+    h1 { font-size: 38px; }
+    .hero-meta { flex-wrap: wrap; gap: 24px; }
+    .cta-section { padding: 48px 24px; }
+    .cta-contact { flex-direction: column; gap: 16px; align-items: flex-start; }
+    footer { flex-direction: column; gap: 12px; align-items: flex-start; }
+  }
+
+  @media print {
+    html { scroll-behavior: auto; }
+    body { background: #000; }
+    header, footer, section, .hero, .cta-section { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-fx" aria-hidden="true">
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+</div>
+
+<div id="floatingLogo" aria-label="Rentigo logo (drag to throw)">
+  <img id="floatingLogoImg" alt="Rentigo logo" src="" />
+</div>
+
+<script>
+  // Edit these values only.
+  const PROPOSAL = {
+    clientName: "Zain Bhai",
+    companyName: "Rentigo",
+    contactLine: "[Your WhatsApp / Email]",
+    // Put your logo file in the SAME folder as this HTML (example: RentigoLogo.png)
+    // Then set this to that filename.
+    logoSrc: "RentigoLogo.png",
+    // If you want a fixed date, set: "2026-05-05"
+    proposalDateISO: null,
+    validDays: 7,
+  };
+
+  function formatLongDate(d) {
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
+  }
+
+  function initProposal() {
+    const today = PROPOSAL.proposalDateISO ? new Date(PROPOSAL.proposalDateISO) : new Date();
+    const validUntil = new Date(today);
+    validUntil.setDate(validUntil.getDate() + (PROPOSAL.validDays ?? 7));
+
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    };
+
+    setText("clientName", PROPOSAL.clientName);
+    setText("companyName", PROPOSAL.companyName);
+    setText("contactLine", PROPOSAL.contactLine);
+    setText("validDays", String(PROPOSAL.validDays ?? 7));
+    setText("validUntil", formatLongDate(validUntil));
+    setText("yearNow", String(today.getFullYear()));
+
+    document.title = `${PROPOSAL.companyName} Admin Redesign — Proposal for ${PROPOSAL.clientName}`;
+  }
+
+  initProposal();
+</script>
+
+<script>
+  // Floating, draggable, throwable logo (mouse + touch).
+  (function () {
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+
+    const el = document.getElementById("floatingLogo");
+    const img = document.getElementById("floatingLogoImg");
+    if (!el || !img) return;
+
+    // Set logo source from config.
+    if (typeof PROPOSAL !== "undefined" && PROPOSAL.logoSrc) {
+      img.src = PROPOSAL.logoSrc;
+    }
+
+    // Physics state
+    let x = 22, y = 22;
+    let vx = 1.35, vy = 1.05; // default drift speed
+    let lastT = performance.now();
+    let dragging = false;
+
+    // Pointer tracking for “throw”
+    let grabOffsetX = 0, grabOffsetY = 0;
+    let lastPX = 0, lastPY = 0, lastPT = 0;
+    let throwVX = 0, throwVY = 0;
+
+    const friction = 0.992;
+    const bounce = 0.90;
+    const maxSpeed = 18;
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+    function bounds() {
+      const r = el.getBoundingClientRect();
+      const w = r.width || 140;
+      const h = r.height || 140;
+      const maxX = Math.max(0, window.innerWidth - w);
+      const maxY = Math.max(0, window.innerHeight - h);
+      return { w, h, maxX, maxY };
+    }
+
+    function applyPos() {
+      el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }
+
+    function tick(t) {
+      const dt = Math.min(0.033, (t - lastT) / 1000);
+      lastT = t;
+
+      if (!dragging) {
+        const { maxX, maxY } = bounds();
+
+        x += vx * (dt * 60);
+        y += vy * (dt * 60);
+
+        // bounce
+        if (x <= 0) { x = 0; vx = Math.abs(vx) * bounce; }
+        if (x >= maxX) { x = maxX; vx = -Math.abs(vx) * bounce; }
+        if (y <= 0) { y = 0; vy = Math.abs(vy) * bounce; }
+        if (y >= maxY) { y = maxY; vy = -Math.abs(vy) * bounce; }
+
+        // gentle friction so it eventually slows unless thrown again
+        vx *= friction;
+        vy *= friction;
+
+        // keep a minimum drift so it “hovers all over”
+        const minDrift = 0.55;
+        if (Math.abs(vx) < minDrift) vx = (vx < 0 ? -1 : 1) * minDrift;
+        if (Math.abs(vy) < minDrift) vy = (vy < 0 ? -1 : 1) * minDrift;
+      }
+
+      applyPos();
+      requestAnimationFrame(tick);
+    }
+
+    function onPointerDown(e) {
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      el.style.cursor = "grabbing";
+
+      const r = el.getBoundingClientRect();
+      grabOffsetX = e.clientX - r.left;
+      grabOffsetY = e.clientY - r.top;
+
+      lastPX = e.clientX;
+      lastPY = e.clientY;
+      lastPT = performance.now();
+      throwVX = 0;
+      throwVY = 0;
+    }
+
+    function onPointerMove(e) {
+      if (!dragging) return;
+      const { maxX, maxY } = bounds();
+
+      x = clamp(e.clientX - grabOffsetX, 0, maxX);
+      y = clamp(e.clientY - grabOffsetY, 0, maxY);
+      applyPos();
+
+      // compute throw velocity from recent movement
+      const now = performance.now();
+      const dt = Math.max(8, now - lastPT); // ms
+      const dx = e.clientX - lastPX;
+      const dy = e.clientY - lastPY;
+      const instVX = (dx / dt) * 16; // normalize to ~60fps
+      const instVY = (dy / dt) * 16;
+
+      // smooth (low-pass)
+      throwVX = throwVX * 0.65 + instVX * 0.35;
+      throwVY = throwVY * 0.65 + instVY * 0.35;
+
+      lastPX = e.clientX;
+      lastPY = e.clientY;
+      lastPT = now;
+    }
+
+    function onPointerUp(e) {
+      if (!dragging) return;
+      dragging = false;
+      el.releasePointerCapture(e.pointerId);
+      el.style.cursor = "grab";
+
+      vx = clamp(throwVX, -maxSpeed, maxSpeed);
+      vy = clamp(throwVY, -maxSpeed, maxSpeed);
+    }
+
+    el.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", onPointerUp, { passive: true });
+    window.addEventListener("pointercancel", onPointerUp, { passive: true });
+
+    // Keep inside bounds on resize
+    window.addEventListener("resize", () => {
+      const { maxX, maxY } = bounds();
+      x = clamp(x, 0, maxX);
+      y = clamp(y, 0, maxY);
+      applyPos();
+    });
+
+    // Start animation loop
+    requestAnimationFrame((t) => {
+      lastT = t;
+      applyPos();
+      requestAnimationFrame(tick);
+    });
+  })();
+</script>
+
+<script>
+  // Subtle 3D tilt for readability/impact (desktop only).
+  (function () {
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const canHover = window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (prefersReduced || !canHover) return;
+
+    const surfaces = Array.from(document.querySelectorAll(".tilt-surface"));
+    if (!surfaces.length) return;
+
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+    for (const surface of surfaces) {
+      const card = surface.querySelector(".tilt-card");
+      if (!card) continue;
+
+      const onMove = (e) => {
+        const r = surface.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width;
+        const y = (e.clientY - r.top) / r.height;
+
+        // keep tilt gentle so text stays readable
+        const rx = clamp((0.5 - y) * 10, -8, 8);
+        const ry = clamp((x - 0.5) * 12, -10, 10);
+
+        card.style.setProperty("--mx", `${x * 100}%`);
+        card.style.setProperty("--my", `${y * 100}%`);
+        card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
+      };
+
+      const onLeave = () => {
+        card.style.transform = "rotateX(0deg) rotateY(0deg) translateZ(0)";
+        card.style.removeProperty("--mx");
+        card.style.removeProperty("--my");
+      };
+
+      surface.addEventListener("mousemove", onMove, { passive: true });
+      surface.addEventListener("mouseleave", onLeave, { passive: true });
+    }
+  })();
+</script>
+
+<script>
+  // Typewriter effect for the solution paragraph.
+  (function () {
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function startTypewriter(el) {
+      if (!el || el.dataset.twStarted === "1") return;
+      el.dataset.twStarted = "1";
+
+      const out = el.querySelector(".tw-out");
+      const cursor = el.querySelector(".tw-cursor");
+      const full = (el.getAttribute("data-text") || "").trimEnd();
+      if (!out) return;
+
+      if (prefersReduced) {
+        out.textContent = full;
+        if (cursor) cursor.style.display = "none";
+        return;
+      }
+
+      out.textContent = "";
+      let i = 0;
+      const baseDelay = 12;   // ms per char
+      const pauseDelay = 160; // after punctuation/newline
+
+      function step() {
+        if (i >= full.length) return;
+        const ch = full[i++];
+        out.textContent += ch;
+
+        let next = baseDelay;
+        if (ch === "\n") next = pauseDelay;
+        else if (".!?".includes(ch)) next = pauseDelay;
+        else if (ch === ",") next = 70;
+
+        window.setTimeout(step, next);
+      }
+
+      window.setTimeout(step, 200);
+    }
+
+    function setup() {
+      const el = document.getElementById("solutionTypewriter");
+      if (!el) return;
+
+      // If reduced motion, just render immediately.
+      if (prefersReduced) {
+        startTypewriter(el);
+        return;
+      }
+
+      // Start typing only once it's visible.
+      if ("IntersectionObserver" in window) {
+        const obs = new IntersectionObserver((entries, observer) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              startTypewriter(entry.target);
+              observer.disconnect();
+              break;
+            }
+          }
+        }, { threshold: 0.35 });
+        obs.observe(el);
+      } else {
+        // Fallback: start after load.
+        startTypewriter(el);
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setup, { once: true });
+    } else {
+      setup();
+    }
+  })();
+</script>
+
+<!-- HEADER -->
+<header>
+  <div class="logo"><span id="companyName">Rentigo</span> <span>×</span> Redesign</div>
+  <div class="badge">Confidential Proposal</div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="eyebrow">Prepared for <span id="clientName">Zain Bhai</span></div>
+  <h1>
+    Your Admin Panel
+    <span class="highlight">Deserves Better.</span>
+  </h1>
+  <p class="hero-sub">
+    A complete front-end redesign of the <span id="companyName">Rentigo</span> admin platform — built for clarity,
+    built for speed, built to make every screen feel current.
+  </p>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <label>Project</label>
+      <span>Admin UI Redesign</span>
+    </div>
+    <div class="meta-item">
+      <label>Deliverable</label>
+      <span>Figma + Vercel Prototype</span>
+    </div>
+    <div class="meta-item">
+      <label>Proposal Valid</label>
+      <span><span id="validDays">7</span> Days</span>
+    </div>
+  </div>
+</div>
+
+<!-- PAIN POINTS -->
+<section>
+  <div class="section-label">01 — The Problem</div>
+  <h2>What's <em>holding Rentigo back</em> right now</h2>
+  <p style="color: var(--text-muted); max-width: 560px; font-size: 16px;">
+    You already have a platform. But two things are silently costing you credibility, 
+    efficiency, and growth every single day.
+  </p>
+
+  <div class="pain-grid">
+    <div class="tilt-surface">
+      <div class="pain-card tilt-card" data-num="1">
+      <div class="pain-tag">Pain #1</div>
+      <h3 class="tilt-depth">Unattractive Design That Kills First Impressions</h3>
+      <p>
+        When a client, landlord, or investor logs into your admin panel and sees 
+        a cluttered, outdated interface — they question the professionalism of the 
+        entire business. Design is not decoration. Design is credibility. 
+        A platform that looks unfinished makes the company look unfinished.
+      </p>
+      </div>
+    </div>
+    <div class="tilt-surface">
+      <div class="pain-card tilt-card" data-num="2">
+      <div class="pain-tag">Pain #2</div>
+      <h3 class="tilt-depth">Low Functionality That Slows Down Your Team</h3>
+      <p>
+        If your team is clicking through confusing menus, losing maintenance jobs, 
+        missing reminders, or hunting for property data — that's lost time. 
+        Every extra click is friction. Friction means slower operations, 
+        more errors, and a team that's frustrated before lunch. 
+        A well-structured UI eliminates all of that.
+      </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tilt-surface">
+    <div class="solution-block tilt-card">
+    <h3 class="tilt-depth">Here's what we're going to do about it.</h3>
+    <p class="typewriter" id="solutionTypewriter" data-text="Scope: Redesign the Rentigo admin panel from the ground up.&#10;&#10;Approach: A modern, minimal interface with a consistent layout system across all modules.&#10;&#10;Outcome: Streamlined workflows that reduce clicks, remove ambiguity, and improve operational speed.&#10;&#10;Deliverables: A complete Figma file and a fully clickable interactive prototype, ready for developer handoff.">
+      <span class="tw-out" aria-live="polite"></span><span class="tw-cursor" aria-hidden="true">▍</span>
+    </p>
+    </div>
+  </div>
+</section>
+
+<!-- PACKAGES -->
+<section>
+  <div class="section-label">02 — Choose Your Package</div>
+  <h2>Three options. <em>One clear choice.</em></h2>
+  <p style="color: var(--text-muted); max-width: 560px; font-size: 16px;">
+    Pick the scope that fits your timeline. All packages include 
+    the same quality standard — the difference is coverage.
+  </p>
+
+  <div class="packages-grid">
+
+    <!-- STARTER -->
+    <div class="tilt-surface">
+      <div class="pkg tilt-card">
+      <div class="pkg-name">Package 01 — Starter</div>
+      <div class="pkg-price tilt-depth"><sup>PKR </sup>48,000</div>
+      <div class="pkg-price-label">Total investment</div>
+      <div class="pkg-timeline">
+        <span class="dot"></span>
+        10 weeks delivery
+      </div>
+      <div class="pkg-screens">20</div>
+      <div class="pkg-screens-label">Screens Designed</div>
+
+      <div class="divider"></div>
+      <div class="includes-title">Included Modules</div>
+
+      <div class="item yes"><span class="icon">✓</span><span>Dashboard (1 screen)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Clients Management (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Properties Portfolio — All, Add, Status (3 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Maintenance — All Jobs, In Progress, Completed, Reports (4 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Basic Utilities — Third Party, Keycode (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Calendar / Diary (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Navigation system, layout, style guide</span></div>
+
+      <div class="divider"></div>
+      <div class="includes-title">Not Included</div>
+      <div class="item no"><span class="icon">✗</span><span>Rental Models module</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Sales & Valuation module</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Leads Management</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Platform Admin / Suppliers</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Sales Progression screens</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Design system documentation</span></div>
+
+      <div class="payment-pill">
+        <label>Payment Structure — 50/50</label>
+        <div class="payment-bar">
+          <div class="pay-a" style="width:50%"></div>
+          <div class="pay-b" style="width:50%"></div>
+        </div>
+        <div class="payment-split">
+          <span class="first">50% upfront (24,000 PKR)</span>
+          <span class="second">50% on delivery</span>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- PROFESSIONAL (RECOMMENDED) -->
+    <div class="tilt-surface">
+      <div class="pkg recommended tilt-card">
+      <div class="rec-badge">★ Recommended</div>
+      <div class="pkg-name">Package 02 — Professional</div>
+      <div class="pkg-price tilt-depth"><sup>PKR </sup>58,000</div>
+      <div class="pkg-price-label">Total investment</div>
+      <div class="pkg-timeline">
+        <span class="dot"></span>
+        8 weeks delivery
+      </div>
+      <div class="pkg-screens">30</div>
+      <div class="pkg-screens-label">Screens Designed</div>
+
+      <div class="divider"></div>
+      <div class="includes-title">Included Modules</div>
+
+      <div class="item yes"><span class="icon">✓</span><span>Everything in Starter</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Rental Models — Guaranteed Rent, Full Management, Platinum Let (3 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Sales & Valuation — Add, All, Pending, Listed (4 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Sales Progression + Sold Properties (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Leads Management — All Leads + Lead Detail (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Maintenance — Declined, Raised, Advanced view (3 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Platform Admin — Suppliers (1 screen)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Calendar Reminders, full navigation, icon library</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Interactive elements (modals, dropdowns, hover states)</span></div>
+
+      <div class="divider"></div>
+      <div class="includes-title">Not Included</div>
+      <div class="item no"><span class="icon">✗</span><span>Mobile responsive (desktop + tablet only)</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Design system documentation</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Dark mode</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Backend / API integration</span></div>
+
+      <div class="payment-pill">
+        <label>Payment Structure — 70/30</label>
+        <div class="payment-bar">
+          <div class="pay-a" style="width:70%"></div>
+          <div class="pay-b" style="width:30%"></div>
+        </div>
+        <div class="payment-split">
+          <span class="first">70% upfront (40,600 PKR)</span>
+          <span class="second">30% on delivery</span>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- PREMIUM -->
+    <div class="tilt-surface">
+      <div class="pkg tilt-card">
+      <div class="pkg-name">Package 03 — Premium</div>
+      <div class="pkg-price tilt-depth"><sup>PKR </sup>90,000</div>
+      <div class="pkg-price-label">Total investment</div>
+      <div class="pkg-timeline">
+        <span class="dot"></span>
+        6 weeks delivery
+      </div>
+      <div class="pkg-screens">35</div>
+      <div class="pkg-screens-label">Screens Designed</div>
+
+      <div class="divider"></div>
+      <div class="includes-title">Included Modules</div>
+
+      <div class="item yes"><span class="icon">✓</span><span>Everything in Professional</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>All remaining screens to complete the full admin suite (35 total)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Full Property Leads pipeline — All Enquiries + Filters (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Complete Platform Admin — Suppliers, User Roles (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Advanced Utilities — Keycode assignment, 3rd party status (2 screens)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Full interactive prototype — all flows, forms, modals, states</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Complete Design System — style guide, components, 120+ icons</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Responsive — Desktop, Tablet, Mobile (414px+)</span></div>
+      <div class="item yes"><span class="icon">✓</span><span>Developer handoff guide</span></div>
+
+      <div class="divider"></div>
+      <div class="includes-title">Not Included</div>
+      <div class="item no"><span class="icon">✗</span><span>Backend / API integration</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Frontend code implementation</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Custom illustrations</span></div>
+      <div class="item no"><span class="icon">✗</span><span>Post-delivery support beyond 2 weeks</span></div>
+
+      <div class="payment-pill">
+        <label>Payment Structure — 70/30</label>
+        <div class="payment-bar">
+          <div class="pay-a" style="width:70%"></div>
+          <div class="pay-b" style="width:30%"></div>
+        </div>
+        <div class="payment-split">
+          <span class="first">70% upfront (63,000 PKR)</span>
+          <span class="second">30% on delivery</span>
+        </div>
+      </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- WHAT'S IN EVERY PACKAGE -->
+<section>
+  <div class="section-label">03 — Full Scope Detail</div>
+  <h2>Every module. <em>Every screen.</em> Mapped clearly.</h2>
+
+  <table class="scope-table">
+    <thead>
+      <tr>
+        <th style="width:30%">Module</th>
+        <th style="width:22%">Screens</th>
+        <th style="width:16%">Starter</th>
+        <th style="width:16%">Professional</th>
+        <th style="width:16%">Premium</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="module">Dashboard</div><div class="detail">Main overview, KPIs, quick actions</div></td>
+        <td>1</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Clients</div><div class="detail">Client list, client details</div></td>
+        <td>2</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Maintenance — Core</div><div class="detail">All Jobs, In Progress, Completed, Reports</div></td>
+        <td>4</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Maintenance — Advanced</div><div class="detail">Declined, Raised, Advanced Filters</div></td>
+        <td>3</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Properties Portfolio</div><div class="detail">All, Add, Status (Pending/Listed/Rented)</div></td>
+        <td>3</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Rental Models</div><div class="detail">Guaranteed Rent, Full Management, Platinum Let</div></td>
+        <td>3</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Sales — Core</div><div class="detail">Add Property, All Properties, Pending, Listed</div></td>
+        <td>4</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Sales — Progression</div><div class="detail">Sales Progression, Sold Properties</div></td>
+        <td>2</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Leads Management</div><div class="detail">All Property Leads, Lead Detail View</div></td>
+        <td>2</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Property Leads — Full Pipeline</div><div class="detail">All Enquiries, Lead Filters, Lead Scoring</div></td>
+        <td>2</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Utilities</div><div class="detail">Third Party Properties, Keycode Management</div></td>
+        <td>2</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Advanced Utilities</div><div class="detail">Keycode Assignment, 3rd Party Status</div></td>
+        <td>2</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Calendar</div><div class="detail">Diary view</div></td>
+        <td>1</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Calendar Reminders</div><div class="detail">Reminders management</div></td>
+        <td>1</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Platform Admin — Basic</div><div class="detail">Suppliers management</div></td>
+        <td>1</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Platform Admin — Full</div><div class="detail">User Roles, Activity Logs</div></td>
+        <td>2</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Design System</div><div class="detail">Style guide, components, icon set (120+), developer handoff</div></td>
+        <td>—</td>
+        <td><span class="partial">Basic</span></td>
+        <td><span class="partial">Partial</span></td>
+        <td><span class="check">✓ Full</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Responsive Design</div><div class="detail">Desktop / Tablet / Mobile</div></td>
+        <td>—</td>
+        <td><span class="partial">Desktop only</span></td>
+        <td><span class="partial">Desktop + Tablet</span></td>
+        <td><span class="check">✓ All</span></td>
+      </tr>
+      <tr>
+        <td><div class="module">Interactive Prototype</div><div class="detail">Clickable, hosted on Vercel</div></td>
+        <td>—</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓ Full</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- WHAT'S NEVER INCLUDED -->
+<section>
+  <div class="section-label">04 — What's Never Included (Any Package)</div>
+  <h2>Clear boundaries. <em>No surprises.</em></h2>
+  <p style="color: var(--text-muted); max-width: 600px; font-size: 16px;">
+    This is a UI/UX design project. The following are outside this scope 
+    and will always require a separate engagement or a different provider.
+  </p>
+
+  <div class="exclusions-grid">
+    <div class="exclusion-item">
+      <div class="ex-icon">⚙️</div>
+      <div>
+        <div class="ex-title">Backend / API Integration</div>
+        <div class="ex-desc">No real data will flow through the prototype. All screens are static UI mockups. Your developer connects the real backend separately.</div>
+      </div>
+    </div>
+    <div class="exclusion-item">
+      <div class="ex-icon">💻</div>
+      <div>
+        <div class="ex-title">Frontend Code Implementation</div>
+        <div class="ex-desc">We deliver Figma design files and an interactive Vercel prototype. Writing production-quality React/Vue/Angular code is not included.</div>
+      </div>
+    </div>
+    <div class="exclusion-item">
+      <div class="ex-icon">📱</div>
+      <div>
+        <div class="ex-title">Mobile App Design</div>
+        <div class="ex-desc">This project covers the web admin panel only. Native iOS or Android app design is a separate project entirely.</div>
+      </div>
+    </div>
+    <div class="exclusion-item">
+      <div class="ex-icon">🌙</div>
+      <div>
+        <div class="ex-title">Dark Mode Theme</div>
+        <div class="ex-desc">Only the light/standard theme is designed. A dark mode variant can be added as a separate add-on for an additional fee.</div>
+      </div>
+    </div>
+    <div class="exclusion-item">
+      <div class="ex-icon">🎞️</div>
+      <div>
+        <div class="ex-title">Animations & Motion Design</div>
+        <div class="ex-desc">Basic hover states are included. Complex micro-animations, page transitions, and motion design are not in scope.</div>
+      </div>
+    </div>
+    <div class="exclusion-item">
+      <div class="ex-icon">🔧</div>
+      <div>
+        <div class="ex-title">Post-Delivery Support</div>
+        <div class="ex-desc">Once files are delivered and revisions completed, ongoing support is a separate arrangement billed at an agreed hourly rate.</div>
+      </div>
+    </div>
+    <div class="exclusion-item">
+      <div class="ex-icon">🌐</div>
+      <div>
+        <div class="ex-title">Multi-Language / Localization</div>
+        <div class="ex-desc">All designs will be in English only. Urdu, Arabic, or any other language version is not part of this scope.</div>
+      </div>
+    </div>
+    <div class="exclusion-item">
+      <div class="ex-icon">🎨</div>
+      <div>
+        <div class="ex-title">Custom Illustrations / Photography</div>
+        <div class="ex-desc">We use stock icons and standard UI elements. Custom hand-drawn illustrations or original photography are not included.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <h4>⚠️ Scope Creep Protection</h4>
+    <p>Any request that falls outside the agreed package will be treated as a change request and quoted separately before work begins.</p>
+    <ul>
+      <li>Additional screens beyond your package: 2,000 PKR per screen</li>
+      <li>New modules not in original scope: Quoted separately</li>
+      <li>Revisions beyond included rounds: 1,000 PKR per round</li>
+      <li>Rush delivery requests: 50% surcharge on remaining balance</li>
+    </ul>
+  </div>
+</section>
+
+<!-- REVISION POLICY -->
+<section>
+  <div class="section-label">05 — Revision Policy</div>
+  <h2>Revisions are included. <em>With clear rules.</em></h2>
+
+  <div class="revision-block">
+    <h3>Revision Rules — No Ambiguity</h3>
+    <ul class="revision-rules">
+      <li>
+        <span class="rule-num">R1</span>
+        <span><strong>2 revision rounds included</strong> in all packages. A "round" means one batch of consolidated feedback — not individual drip comments over multiple days. You collect all feedback, send it in one message, we implement it. That's one round.</span>
+      </li>
+      <li>
+        <span class="rule-num">R2</span>
+        <span><strong>Feedback must be submitted within 5 business days</strong> of receiving a deliverable. After 5 days without response, the deliverable is considered approved and we move forward. Timelines will not shift due to delayed feedback.</span>
+      </li>
+      <li>
+        <span class="rule-num">R3</span>
+        <span><strong>Revisions apply to the agreed screens only.</strong> Requesting a completely new screen, a new module, or a fundamentally different layout is not a revision — it's a new scope item and will be quoted separately.</span>
+      </li>
+      <li>
+        <span class="rule-num">R4</span>
+        <span><strong>Revisions must be specific.</strong> Feedback like "make it better" or "it doesn't feel right" will require clarification before implementation. Vague feedback is not actionable and may consume your revision round.</span>
+      </li>
+      <li>
+        <span class="rule-num">R5</span>
+        <span><strong>One point of contact for feedback.</strong> If multiple people are reviewing (team, stakeholders), feedback must be consolidated by you before sending. Conflicting feedback from different people in separate messages will not be accepted simultaneously.</span>
+      </li>
+      <li>
+        <span class="rule-num">R6</span>
+        <span><strong>Additional revision rounds: 1,000 PKR each.</strong> Requested before the round begins. Paid before implementation starts. No exceptions.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section>
+  <div class="section-label">06 — Delivery Timeline</div>
+  <h2>Week by week. <em>No guessing.</em></h2>
+
+  <div class="timeline">
+    <div class="tl-pkg">
+      <h3>Starter — 10 Weeks</h3>
+      <div class="tl-item"><div class="tl-week">Wk 1–2</div><div class="tl-desc">Strategy, planning, wireframes, layout system</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 3–5</div><div class="tl-desc">Dashboard, Clients, Properties core screens</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 6–8</div><div class="tl-desc">Maintenance, Utilities, Calendar screens</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 9</div><div class="tl-desc">Interactive Vercel prototype build</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 10</div><div class="tl-desc">Client revisions + final delivery</div></div>
+    </div>
+    <div class="tl-pkg" style="border-left: 2px solid var(--accent);">
+      <h3>Professional — 8 Weeks ⭐</h3>
+      <div class="tl-item"><div class="tl-week">Wk 1</div><div class="tl-desc">Strategy, brand alignment, design system setup</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 2–3</div><div class="tl-desc">Dashboard, Clients, navigation, core layout</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 4–5</div><div class="tl-desc">Properties, Rental Models, Sales screens (15 screens)</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 6</div><div class="tl-desc">Leads, Maintenance, Admin, Calendar (15 screens)</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 7</div><div class="tl-desc">Vercel prototype, interactions, polish</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 8</div><div class="tl-desc">Client revisions + final handoff</div></div>
+    </div>
+    <div class="tl-pkg">
+      <h3>Premium — 6 Weeks</h3>
+      <div class="tl-item"><div class="tl-week">Wk 1</div><div class="tl-desc">Strategy, full design system, component library</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 2–3</div><div class="tl-desc">All core + advanced screens (20 screens)</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 4–5</div><div class="tl-desc">Remaining screens, full interactions, responsive (15 screens)</div></div>
+      <div class="tl-item"><div class="tl-week">Wk 6</div><div class="tl-desc">Prototype, documentation, developer handoff, delivery</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="eyebrow" style="color: rgba(0,0,0,0.5); margin-bottom: 24px;">Ready to move?</div>
+  <h2>Let's fix Rentigo's admin — the right way.</h2>
+  <p>One decision. One clear scope. Delivered on time.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Choose Package</div>
+      <div class="step-desc">Pick Starter, Professional, or Premium. Reply with your choice.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Contract Signed</div>
+      <div class="step-desc">We send a simple agreement. You sign. Takes 10 minutes.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Payment #1 Sent</div>
+      <div class="step-desc">Upfront payment confirms the project. Work starts within 48 hours.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">We Build It</div>
+      <div class="step-desc">You get weekly updates. First screens arrive within 2 weeks.</div>
+    </div>
+  </div>
+
+  <div class="cta-contact">
+    <div>
+      <p style="font-size:13px; opacity:0.6; margin-bottom:4px;">This proposal is valid for</p>
+      <strong><span id="validDays">7</span> Days Only</strong>
+    </div>
+    <div>
+      <p style="font-size:13px; opacity:0.6; margin-bottom:4px;">Questions? Reach out directly</p>
+      <strong id="contactLine">[Your WhatsApp / Email]</strong>
+    </div>
+    <div>
+      <p style="font-size:13px; opacity:0.6; margin-bottom:4px;">Prepared exclusively for</p>
+      <strong><span id="clientName">Zain Bhai</span> — <span id="companyName">Rentigo</span></strong>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© <span id="yearNow">2026</span> — Confidential Proposal for <span id="companyName">Rentigo</span> Admin Redesign</p>
+  <div class="validity">Proposal valid until: <span id="validUntil">—</span></div>
+</footer>
+
+</body>
+</html>
